@@ -134,7 +134,7 @@ void s_ttt_end_game(Winner winner) {
 }
 
 void s_ttt_check_winner() {
-    int dx[ ] = { 1, 1, 0, -1 }, dy[ ] = { 0, 1, 1, 1 };
+    int dx[] = { 1, 1, 0, -1 }, dy[] = { 0, 1, 1, 1 };
     for (int k = 0; k < 4; k++) {
         for (int i = 0; i < state->m_size; i++) {
             bool gameWon = s_walk(i, 0, dx[k], dy[k]);
@@ -195,7 +195,7 @@ void s_ttt_clicked(Vector2 pos) {
         int clicked = ttt_clicked(state->m_state[clicked_ind], pos, state->m_turn);
         if (clicked != -1) {
             s_ttt_set_active(clicked);
-            // state->m_turn = state->m_turn == Turn_Circle ? Turn_Cross : Turn_Circle;
+            state->m_turn = state->m_turn == Turn_Circle ? Turn_Cross : Turn_Circle;
         }
     }
     s_ttt_check_winner();

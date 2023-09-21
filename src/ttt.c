@@ -70,7 +70,7 @@ void ttt_end_game(ttt_state* m_state, Winner winner) {
 }
 
 void ttt_check_winner(ttt_state* m_state) {
-    int dx[ ] = { 1, 1, 0, -1 }, dy[ ] = { 0, 1, 1, 1 };
+    int dx[] = { 1, 1, 0, -1 }, dy[] = { 0, 1, 1, 1 };
     for (int k = 0; k < 4; k++) {
         for (int i = 0; i < m_state->m_size; i++) {
             bool gameWon = walk(m_state, i, 0, dx[k], dy[k]);
