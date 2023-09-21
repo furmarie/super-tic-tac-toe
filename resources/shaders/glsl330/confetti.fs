@@ -9,7 +9,7 @@
 #define N_CONFETTI 16
 #define PI 3.1415926535
 #define SQUARE_HARDNESS 10.0
-#define GLOW_INTENSITY 0.8
+#define GLOW_INTENSITY 0
 #define HUE_VARIANCE 0.2
 
 #define V_INITIAL 600.0
@@ -31,19 +31,17 @@ uniform float time;
 out vec4 finalColor;
 
 // From my other shader https://www.shadertoy.com/view/4tB3zD
-float trapezium(float x)
-{
-	return min(1.0, max(0.0, 1.0 - abs(-mod(x, 1.0) * 3.0 + 1.0)) * 2.0);
+float trapezium(float x) {
+    return min(1.0, max(0.0, 1.0 - abs(-mod(x, 1.0) * 3.0 + 1.0)) * 2.0);
 }
 
-vec3 colFromHue(float hue)
-{
+vec3 colFromHue(float hue) {
     // https://en.wikipedia.org/wiki/Hue#/media/File:HSV-RGB-comparison.svg
-	return vec3(trapezium(hue - 1.0/3.0), trapezium(hue), trapezium(hue + 1.0/3.0));
+    return vec3(trapezium(hue - 1.0 / 3.0), trapezium(hue), trapezium(hue + 1.0 / 3.0));
 }
 
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+float rand(vec2 co) {
+    return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 // Gets a random value for the most recent explosion at the specified time.
@@ -54,8 +52,7 @@ float getPopRandom(float time, float random) {
 
 // Gets a random value for the most recent explosion at the specified time.
 float getPopTime(float time) {
-    float pop_start_time = floor(time / TIME_BETWEEN_POPS) * TIME_BETWEEN_POPS
-        + (getPopRandom(time, 2.2)) * TIME_BETWEEN_POPS_RANDOM;
+    float pop_start_time = floor(time / TIME_BETWEEN_POPS) * TIME_BETWEEN_POPS + (getPopRandom(time, 2.2)) * TIME_BETWEEN_POPS_RANDOM;
     return time - pop_start_time;
 }
 
@@ -65,20 +62,19 @@ float xposition(float time, float angle, float v_initial, float terminal_v) {
     float t = time;
     float sin_amp = 20.0 * (1.0 - exp(-pow(time / 7.0, 2.0)));
     float x_t = sin(time / 5.0) * sin_amp + time * 3.0;
-    return v * terminal_v / g * (1.0 - exp(-g*t/terminal_v)) * cos(angle) + x_t;
+    return v * terminal_v / g * (1.0 - exp(-g * t / terminal_v)) * cos(angle) + x_t;
 }
 
 float yposition(float time, float angle, float v_initial, float terminal_v) {
     float g = GRAVITY;
     float v = v_initial;
     float t = time;
-    return v * terminal_v / g * (1.0 - exp(-g*t/terminal_v)) * sin(angle) - terminal_v * t;
+    return v * terminal_v / g * (1.0 - exp(-g * t / terminal_v)) * sin(angle) - terminal_v * t;
 }
 
 // This function from http://www.blackpawn.com/texts/pointinpoly/
 // Own modifications added.
-float isInExtendedTriangle(vec2 b, vec2 a, vec2 c, vec2 p)
-{
+float isInExtendedTriangle(vec2 b, vec2 a, vec2 c, vec2 p) {
     // Compute vectors        
     vec2 v0 = c - a;
     vec2 v1 = b - a;
@@ -93,8 +89,8 @@ float isInExtendedTriangle(vec2 b, vec2 a, vec2 c, vec2 p)
 
     // Compute barycentric coordinates
     float denom = (dot00 * dot11 - dot01 * dot01);
-    if (denom < 0.001) {
-     	return 0.0;   
+    if(denom < 0.001) {
+        return 0.0;
     }
     float invDenom = 1.0 / denom;
     float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
@@ -102,12 +98,11 @@ float isInExtendedTriangle(vec2 b, vec2 a, vec2 c, vec2 p)
 
     // Check if point is in triangle
     return clamp(u * SQUARE_HARDNESS, 0.0, 1.0) *
-           clamp(v * SQUARE_HARDNESS, 0.0, 1.0);// * 
+        clamp(v * SQUARE_HARDNESS, 0.0, 1.0);// * 
          //  clamp((1.0 - (u + v)) * 100.0, 0.0, 1.0); // (u >= 0) && (v >= 0) && (u + v < 1)   
 }
 
-float isInQuad(vec2 a, vec2 b, vec2 c, vec2 d, vec2 p)
-{
+float isInQuad(vec2 a, vec2 b, vec2 c, vec2 d, vec2 p) {
     return isInExtendedTriangle(a, b, c, p) * isInExtendedTriangle(c, d, a, p);
 }
 
@@ -116,40 +111,33 @@ vec4 rotate(float phi, float theta, float psi) {
     float cosTheta = cos(theta), sinTheta = sin(theta);
     float cosPsi = cos(psi), sinPsi = sin(psi);
     mat3 matrix;
-    
+
     vec3 row0 = vec3(cosTheta * cosPsi, -cosTheta * sinPsi, sinTheta);
-    
-    vec3 row1 = vec3(cosPhi * sinPsi + sinPhi * sinTheta * cosPsi, 
-                     cosPhi * cosPsi - sinPhi * sinTheta * sinPsi, 
-                     -sinPhi * cosTheta);
-    
+
+    vec3 row1 = vec3(cosPhi * sinPsi + sinPhi * sinTheta * cosPsi, cosPhi * cosPsi - sinPhi * sinTheta * sinPsi, -sinPhi * cosTheta);
+
     vec3 a = row0 - row1;
-    
+
     vec3 b = row0 + row1;
-    
+
     return vec4(a, b);
 }
 
-float isInRotatedQuad(vec4 offsets, vec2 center, vec2 p)
-{
-    return isInQuad(center + offsets.xy, 
-                    center + offsets.zw, 
-                    center - offsets.xy,
-                    center - offsets.zw, p);
+float isInRotatedQuad(vec4 offsets, vec2 center, vec2 p) {
+    return isInQuad(center + offsets.xy, center + offsets.zw, center - offsets.xy, center - offsets.zw, p);
 }
 
 bool isClose(float a, float b) {
-    return abs(a - b) < 1e-2;
+    return abs(a - b) < 0.5;
 }
 
-void main()
-{
+void main() {
     vec2 scaledFragCoord = gl_FragCoord.xy / resolution.xy * vec2(800.0, 450.0);
-	const float size = 6.0;
+    const float size = 6.0;
     const float max_square_dist = size * size * 128.0;
     float max_dist = sqrt(max_square_dist);
     const float confettiRotateTimeScale = 2.0;
-    
+
     float t = time * confettiRotateTimeScale / 5.0 + 1.3;
     vec4 matrix1 = rotate(t * 8.0, sin(t) * 0.5, t / 4.0) * size;
     t = time * confettiRotateTimeScale / 5.1 + 92.2;
@@ -158,51 +146,48 @@ void main()
     vec4 matrix3 = rotate(t * 8.0, sin(t) * 0.5, t / 4.0) * size;
     t = time * confettiRotateTimeScale / 4.3 + 1.0;
     vec4 matrix4 = rotate(t * 8.0, sin(t) * 0.5, t / 4.0) * size;
-    
+
     vec4 col = vec4(0.0, 0.0, 0.0, 0.0);
-    for (int i=0; i<N_POPS; i++) {
+    for(int i = 0; i < N_POPS; i++) {
         float sampleTime = time - float(i) * TIME_BETWEEN_POPS;
         float popTime = getPopTime(sampleTime);
         vec2 point = vec2(getPopRandom(sampleTime, 3.1) * 800.0, 0);
         float baseHue = getPopRandom(sampleTime, 3.5);
-        
-        if (abs(scaledFragCoord.x - point.x) > 300.0) {
+
+        if(abs(scaledFragCoord.x - point.x) > 300.0) {
             continue;
         }
-        
-        
-        for (int j=0; j<N_CONFETTI; j++) {
+
+        for(int j = 0; j < N_CONFETTI; j++) {
             float angle = PI / 2.0 + PI / 4.0 * (getPopRandom(sampleTime, float(j)) - 0.5);
-            float v_initial =  V_INITIAL + V_RANDOM * getPopRandom(sampleTime, float(j - 5));
+            float v_initial = V_INITIAL + V_RANDOM * getPopRandom(sampleTime, float(j - 5));
             float terminal_v = TERMINAL_VELOCITY + TERMINAL_VELOCITY_RANDOM * (getPopRandom(sampleTime, float(j - 10)) - 0.5);
-                
+
             float alterTime = popTime * 10.0;
             float x = xposition(alterTime, angle, v_initial, terminal_v) / 5.0;
             float y = yposition(alterTime, angle, v_initial, terminal_v) / 5.0;
-            
+
             vec2 confettiLocation = vec2(point.x + x, y);
             vec2 delta = confettiLocation - scaledFragCoord;
             float dist = dot(delta, delta);
-            if (dist > max_square_dist) {
-             	continue;   
+            if(dist > max_square_dist) {
+                continue;
             }
             //dist = sqrt(dist);
             float glowIntensity = (clamp(1.0 - pow(dist / max_square_dist, 0.05), 0.0, 1.0) / 1.0) * GLOW_INTENSITY;
             float f = getPopRandom(sampleTime, float(j - 2));
             vec4 matrix;
             float matrixIndex = mod(f * 4.0, 4.0);
-            if (matrixIndex < 1.0) {
+            if(matrixIndex < 1.0) {
                 matrix = matrix1;
-            } else if (matrixIndex < 2.0) {
+            } else if(matrixIndex < 2.0) {
                 matrix = matrix2;
-            } else if (matrixIndex < 3.0) {
+            } else if(matrixIndex < 3.0) {
                 matrix = matrix3;
             } else {
                 matrix = matrix4;
             }
-            float squareIntensity = isInRotatedQuad(matrix,
-                                  			        confettiLocation, 
-                                                    scaledFragCoord);
+            float squareIntensity = isInRotatedQuad(matrix, confettiLocation, scaledFragCoord);
             vec3 pastelColour = colFromHue(baseHue + getPopRandom(sampleTime, float(j - 15)) * HUE_VARIANCE);
             vec3 pastelGlowColour = glowIntensity * (pastelColour * (1.0 - GLOW_WHITENESS) + vec3(GLOW_WHITENESS, GLOW_WHITENESS, GLOW_WHITENESS));
             vec3 pastelSqColour = squareIntensity * (pastelColour * (1.0 - SQUARE_WHITENESS) + vec3(SQUARE_WHITENESS, SQUARE_WHITENESS, SQUARE_WHITENESS));
@@ -213,6 +198,6 @@ void main()
     if(isClose(col.r, 0) && isClose(col.g, 0) && isClose(col.b, 0)) {
         col.a = 0.0;
     }
-    
-	finalColor = col;
+
+    finalColor = col;
 }
