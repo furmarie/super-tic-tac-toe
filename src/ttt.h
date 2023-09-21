@@ -47,9 +47,14 @@ LIST_OF_FUNCS
 #undef FUNC
 
 
-void ttt_check_winner(ttt_state*);
 int ttt_clicked(ttt_state*, Vector2, Turn);
+void ttt_check_winner(ttt_state*);
 void ttt_reset(ttt_state*);
+
+// Explicitly declaring, emcc errors on implicit declaration
+#ifdef __EMSCRIPTEN__
+void ttt_draw(ttt_state*, float);
+#endif 
 
 // Returns the center of cell with top left coords (x, y) and cell size cellSize
 static Vector2 cell_center(float x, float y, int cellSize) {

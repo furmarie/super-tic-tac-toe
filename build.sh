@@ -68,7 +68,7 @@ build_web() {
         mkdir -p ./build/web
         cp $raylib_dir/src/libraylib.a ./build/web/
     fi
-    emcc -o ./app/ttt.js ./src/ttt.c ./src/main.c \
+    emcc -o ./app/ttt.js ./src/sttt.c ./src/ttt.c ./src/main.c \
          -I$raylib_dir/src/ -I$raylib_dir/src/external/ \
          -L./build/web/ -lraylib \
          -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s USE_GLFW=3 \
