@@ -1,6 +1,6 @@
-# Tic-Tac-Toe using Raylib
+# Super-Tic-Tac-Toe using Raylib
 
-Tic-Tac-Toe written in C. Uses Raylib for rendering.
+Super-Tic-Tac-Toe written in C. Uses Raylib for rendering.
 
 # Running locally
 
