@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TTT_H_
+#define TTT_H_
 
 #include <raylib.h>
 #include <stdlib.h>
@@ -38,8 +39,8 @@ typedef struct {
     FUNC(s_ttt_reset, void, void)              \
     FUNC(s_ttt_draw, void, float)              \
     FUNC(s_ttt_init, void, int, int, int)      \
-    // FUNC(ttt_pre_reload, void*, ttt_state*)    \
-    // FUNC(ttt_post_reload, void, void*)         \
+    FUNC(s_ttt_pre_reload, void*, void)        \
+    FUNC(s_ttt_post_reload, void, void*)       \
 
 #define FUNC(func, ret, ...) typedef ret func##_t(__VA_ARGS__);
 LIST_OF_FUNCS
@@ -54,3 +55,5 @@ void ttt_reset(ttt_state*);
 static Vector2 cell_center(float x, float y, int cellSize) {
     return CLITERAL(Vector2) { x + cellSize / 2, y + cellSize / 2 };
 }
+
+#endif // TTT_H_

@@ -15,17 +15,21 @@ raylib_dir="./raylib/raylib-$raylib_ver"
 
 set -xe
 
-if [[ ! -d "./raylib/raylib-${raylib_ver}" ]]; then
-    mkdir -p ./raylib 
-    raylib_tar=./raylib/raylib-$raylib_ver.tar.gz
-    wget https://github.com/raysan5/raylib/archive/refs/tags/${raylib_ver}.tar.gz -O $raylib_tar
-    tar -xf $raylib_tar -C ./raylib
-    rm $raylib_tar
-fi
+check_raylib() {
+    if [[ ! -d "./raylib/raylib-${raylib_ver}" ]]; then
+        mkdir -p ./raylib 
+        raylib_tar=./raylib/raylib-$raylib_ver.tar.gz
+        wget https://github.com/raysan5/raylib/archive/refs/tags/${raylib_ver}.tar.gz -O $raylib_tar
+        tar -xf $raylib_tar -C ./raylib
+        rm $raylib_tar
+    fi
+}
 
 
 build_desktop() {
     # Building raylib
+    check_raylib
+
     mkdir -p ./build
 
     CFLAGS="-ggdb"
@@ -55,6 +59,9 @@ build_desktop() {
 }
 
 build_web() {
+    # Building raylib
+    check_raylib
+
     if [[ ! -f ./build/web/libraylib.a ]]; then
         make -C $raylib_dir/src/ clean
         make -j 4 -C "$raylib_dir/src/" PLATFORM=PLATFORM_WEB

@@ -8,8 +8,8 @@
 
 #define GLSL_VERSION 330
 
-#define ind_to_coord(ind, x, y, _state)        \
-    int x = (ind) / (_state->m_size); \
+#define ind_to_coord(ind, x, y, _state) \
+    int x = (ind) / (_state->m_size);   \
     int y = (ind) % (_state->m_size);
 
 #define coord_to_ind(x, y, _state) ((int)(x) * m_state->m_size + (int)(y))
@@ -122,13 +122,13 @@ int ttt_clicked(ttt_state* m_state, Vector2 pos, Turn turn) {
     float y_d = pos.y - m_state->y_offset;
     int clicked_ind = coord_to_ind(x_d / cellSize, y_d / cellSize, m_state);
 
-    if(m_state->m_state[clicked_ind] == Turn_None) {
+    if (m_state->m_state[clicked_ind] == Turn_None) {
         m_state->m_state[clicked_ind] = turn;
         ttt_check_winner(m_state);
         return clicked_ind;
     }
-    
-    return -1; 
+
+    return -1;
 }
 
 void ttt_draw(ttt_state* m_state, float dt) {
@@ -159,7 +159,7 @@ void ttt_draw(ttt_state* m_state, float dt) {
             int cell_y = m_state->y_offset + j * cellSize;
             Rectangle rec = { cell_x, cell_y, cellSize, cellSize };
 
-            DrawRectangleLinesEx(rec, 5, lineCol);
+            DrawRectangleLinesEx(rec, 3, lineCol);
 
             int ind = coord_to_ind(i, j, m_state);
             if (m_state->m_state[ind] == Turn_Circle) {

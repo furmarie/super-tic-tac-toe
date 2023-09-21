@@ -91,7 +91,7 @@ bool s_walk(int x, int y, int dx, int dy) {
             int nextIndex = nx * size + ny;
             ttt_state* curr = state->m_state[currIndex];
             ttt_state* next = state->m_state[nextIndex];
-            if(!(curr->m_gameOver && next->m_gameOver)) {
+            if (!(curr->m_gameOver && next->m_gameOver)) {
                 break;
             }
             if (curr->m_winner != Turn_None && curr->m_winner == next->m_winner) {
@@ -129,6 +129,7 @@ void s_ttt_end_game(Winner winner) {
     }
     state->m_winner = winner;
     state->m_gameOver = true;
+    state->active_cell = -1;
     state->runTime = 0;
 }
 
@@ -163,19 +164,19 @@ void s_ttt_check_winner() {
         }
     }
 
-    // if (!state->m_gameOver) {
-    //     bool draw = true;
-    //     for (int i = 0; i < state->m_size * state->m_size; i++) {
-    //         draw &= state->m_state[i] != Turn_None;
-    //     }
-    //     if (draw) {
-    //         s_ttt_end_game(Winner_Drawn);
-    //     }
-    // }
+    if (!state->m_gameOver) {
+        bool draw = true;
+        for (int i = 0; i < state->m_size * state->m_size; i++) {
+            draw &= state->m_state[i]->m_gameOver && state->m_state[i]->m_winner != Turn_None;
+        }
+        if (draw) {
+            s_ttt_end_game(Winner_Drawn);
+        }
+    }
 }
 
 void s_ttt_set_active(int ind) {
-    if(state->m_state[ind]->m_gameOver) {
+    if (state->m_state[ind]->m_gameOver) {
         state->active_cell = -1;
     }
     else {
@@ -194,7 +195,7 @@ void s_ttt_clicked(Vector2 pos) {
         int clicked = ttt_clicked(state->m_state[clicked_ind], pos, state->m_turn);
         if (clicked != -1) {
             s_ttt_set_active(clicked);
-            state->m_turn = state->m_turn == Turn_Circle ? Turn_Cross : Turn_Circle;
+            // state->m_turn = state->m_turn == Turn_Circle ? Turn_Cross : Turn_Circle;
         }
     }
     s_ttt_check_winner();
@@ -206,36 +207,23 @@ void s_ttt_draw(float dt) {
     }
 
     float cellSize = (float)GetScreenWidth() / state->m_size;
-    Color lineCol = PINK;
+    Color lineCol = YELLOW;
 
     Color clear_color = { 120, 130, 130, 255 };
-
-    // if (state->m_gameOver && state->m_winner != Winner_Drawn) {
-    //     state->runTime += dt * 0.5;
-    //     SetShaderValue(state->confetti, state->confetti_time_loc, &state->runTime, SHADER_UNIFORM_FLOAT);
-
-    //     float res[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
-    //     SetShaderValue(state->confetti, state->confetti_res_loc, res, SHADER_UNIFORM_VEC2);
-
-    //     // Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-    //     // BeginShaderMode(state->confetti);
-    //     // // DrawTexture(texture, 5, 5, RED);
-    //     // DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){255, 0, 0, 0});
-    //     // EndShaderMode();
-    // }
-    // else {
     ClearBackground(clear_color);
-    // }
+
     for (int i = 0; i < state->m_size; i++) {
         for (int j = 0; j < state->m_size; j++) {
             float cell_x = i * cellSize, cell_y = j * cellSize;
             Rectangle rec = { cell_x, cell_y, cellSize, cellSize };
 
-            // DrawRectangleLinesEx(rec, 5, lineCol);
-
             int ind = coord_to_ind(i, j);
             // Draw ttt
             ttt_draw(state->m_state[ind], dt);
+
+            if (ind == state->active_cell) {
+                DrawRectangleLinesEx(rec, 5, GREEN);
+            }
 
             // if (state->m_state[ind]->m_winner == Turn_Circle) {
             //     Vector2 center = cell_center(cell_x, cell_y, cellSize);
@@ -264,28 +252,45 @@ void s_ttt_draw(float dt) {
         Vector2 start_pos = cell_center(start_x * cellSize, start_y * cellSize, cellSize);
         Vector2 end_pos = cell_center(end_x * cellSize, end_y * cellSize, cellSize);
         DrawLineEx(start_pos, end_pos, 10, (Color) { 255, 255, 255, 190 });
+
+        state->runTime += dt * 0.5;
+        SetShaderValue(state->confetti, state->confetti_time_loc, &state->runTime, SHADER_UNIFORM_FLOAT);
+
+        float res[2] = { (float)GetScreenWidth(), (float)GetScreenHeight() };
+        SetShaderValue(state->confetti, state->confetti_res_loc, res, SHADER_UNIFORM_VEC2);
+
+        // Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+        BeginShaderMode(state->confetti);
+        // DrawTexture(texture, 5, 5, RED);
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){255, 0, 0, 255});
+        EndShaderMode();
     }
-    // BeginShaderMode(state->confetti);
-    // // DrawTexture(texture, 5, 5, RED);
-    // DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), CLITERAL(Color){255, 0, 0, 0});
-    // EndShaderMode();
 }
 
-// void* s_ttt_pre_reload() {
-//     UnloadShader(state->confetti);
-//     s_ttt_state* ptr = (s_ttt_state*)malloc(sizeof(*state));
-//     memcpy(ptr, state, sizeof(*state));
+void* s_ttt_pre_reload() {
+    UnloadShader(state->confetti);
+    s_ttt_state* ptr = (s_ttt_state*)malloc(sizeof(*state));
+    memcpy(ptr, state, sizeof(*state));
+    int sz = state->m_size;
+    ptr->m_state = malloc(sz * sz * sizeof(ttt_state*));
+    ttt_state** states = state->m_state;
+    for (int i = 0; i < sz * sz; i++) {
+        ptr->m_state[i] = malloc(sizeof(*states[i]));
+        memcpy(ptr->m_state[i], states[i], sizeof(*states[i]));
+        ptr->m_state[i]->m_state = malloc(sz * sz * sizeof(Turn));
+        memcpy(ptr->m_state[i]->m_state, states[i]->m_state, sz * sz * sizeof(Turn));
+        free(states[i]->m_state);
+        free(states[i]);
+    }
+    free(state);
+    return ptr;
+}
 
-
-
-//     return ptr;
-// }
-
-// void s_ttt_post_reload(void* ptr) {
-//     state = (ttt_state*)malloc(sizeof(*state));
-//     memcpy(state, ptr, sizeof(*state));
-//     state->confetti = LoadShader(0, TextFormat("./resources/shaders/glsl%d/confetti.fs", GLSL_VERSION));
-//     state->confetti_time_loc = GetShaderLocation(state->confetti, "time");
-//     state->confetti_res_loc = GetShaderLocation(state->confetti, "resolution");
-//     free(ptr);
-// }
+void s_ttt_post_reload(void* ptr) {
+    state = (s_ttt_state*)malloc(sizeof(*state));
+    memcpy(state, ptr, sizeof(*state));
+    free(ptr);
+    state->confetti = LoadShader(0, TextFormat("./resources/shaders/glsl%d/confetti.fs", GLSL_VERSION));
+    state->confetti_time_loc = GetShaderLocation(state->confetti, "time");
+    state->confetti_res_loc = GetShaderLocation(state->confetti, "resolution");
+}

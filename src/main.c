@@ -18,14 +18,14 @@ int main(void) {
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        // if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_R)) {
-        //     void* state = ttt_pre_reload();
-        //     if (!reload_libplug()) {
-        //         return 1;
-        //     }
-        //     ttt_post_reload(state);
-        // }
-        if (IsKeyPressed(KEY_R)) {
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_R)) {
+            void* state = s_ttt_pre_reload();
+            if (!reload_libplug()) {
+                return 1;
+            }
+            s_ttt_post_reload(state);
+        }
+        else if (IsKeyPressed(KEY_R)) {
            s_ttt_reset();
         }
         s_ttt_draw(GetFrameTime());
