@@ -43,6 +43,7 @@ void s_ttt_init(int size, int width, int height) {
     state->width = width;
 
     float cellSize = (float)width / size;
+    int padding = 6;
     ttt_state** states = state->m_state;
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -51,11 +52,11 @@ void s_ttt_init(int size, int width, int height) {
             memset(new_ttt_state, 0, sizeof(*new_ttt_state));
 
             new_ttt_state->m_size = size;
-            new_ttt_state->width = cellSize - 4;
+            new_ttt_state->width = cellSize - padding;
 
             float x_off = i * cellSize, y_off = j * cellSize;
-            new_ttt_state->x_offset = x_off + 2;
-            new_ttt_state->y_offset = y_off + 2;
+            new_ttt_state->x_offset = x_off + padding / 2;
+            new_ttt_state->y_offset = y_off + padding / 2;
 
             new_ttt_state->m_state = (Turn*)malloc(size * size * sizeof(Turn));
             assert(new_ttt_state->m_state != NULL && "Unable to allocate memory");
@@ -78,6 +79,7 @@ void s_ttt_reset() {
     }
     state->m_turn = Turn_Cross;
     state->m_gameOver = false;
+    state->active_cell = -1;
 }
 
 bool s_walk(int x, int y, int dx, int dy) {
